@@ -12,8 +12,8 @@ var S=blank(),tab='g';
    Mientras digan "TU_SUPABASE..." el sistema muestra una pantalla de aviso
    en vez de intentar conectarse.
    ================================================================== */
-const SUPA_URL = "https://nczsjqeooclqtvuegluu.supabase.co";
-const SUPA_KEY = "sb_publishable_sQdvI4-8WuJWvAFxJSGMFw_RRwZppIv";
+const SUPA_URL='https://nczsjqeooclqtvuegluu.supabase.co';
+const SUPA_KEY='sb_publishable_sQdvI4-8WuJWvAFxJSGMFw_RRwZppIv';
 const supa=(window.supabase&&!SUPA_URL.startsWith('TU_'))?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
 /* 'k' (borrador en edición) es solo tuyo, no se comparte: vive en localStorage de tu navegador.
    'estimaciones' SÍ es la biblioteca compartida (tabla en Supabase). */
@@ -295,6 +295,10 @@ if(pw!==cf){setupErr='Las contraseñas no coinciden.';renderRoot();return}
 if(pw.length<6){setupErr='La contraseña debe tener al menos 6 caracteres.';renderRoot();return}
 const{data,error}=await supa.auth.signUp({email:em,password:pw});
 if(error){setupErr=error.message;renderRoot();return}
+/* Por seguridad, Supabase no marca error si el correo ya tiene cuenta: en ese caso
+   regresa un usuario sin "identities" y no manda ningún correo nuevo. */
+if(data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){
+setupErr='';loginErr='Este correo ya tiene una cuenta creada. Si ya la confirmaste, solo inicia sesión. Si no, revisa spam o espera unos minutos: Supabase limita cuántos correos de confirmación puede mandar.';vista='login';loginEmail=em;renderRoot();return}
 if(!data.session){setupErr='';loginErr='Cuenta creada. Revisa tu correo para confirmarla y después inicia sesión aquí.';vista='login';loginEmail=em;renderRoot();return}
 AUTH_UID=data.user.id;const prof=await afterAuthClaim(em,nom,ape);
 if(!prof){setupErr='Tu correo no ha sido invitado por un administrador. Pídele que te invite desde "Usuarios".';await supa.auth.signOut();renderRoot();return}
