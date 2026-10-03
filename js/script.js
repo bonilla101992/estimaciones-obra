@@ -12,8 +12,8 @@ var S=blank(),tab='g';
    Mientras digan "TU_SUPABASE..." el sistema muestra una pantalla de aviso
    en vez de intentar conectarse.
    ================================================================== */
-const SUPABASE_URL = "https://nczsjqeooclqtvuegluu.supabase.co";
-const SUPABASE_KEY = "EWyCDuygP2u2TOmkyo_SQQ_GctSaWFK";
+const SUPA_URL = "https://nczsjqeooclqtvuegluu.supabase.co";
+const SUPA_KEY = "EWyCDuygP2u2TOmkyo_SQQ_GctSaWFK";
 const supa=(window.supabase&&!SUPA_URL.startsWith('TU_'))?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
 /* 'k' (borrador en edición) es solo tuyo, no se comparte: vive en localStorage de tu navegador.
    'estimaciones' SÍ es la biblioteca compartida (tabla en Supabase). */
