@@ -1,3 +1,10 @@
+const SUPABASE_URL = "TU_PROJECT_URL";
+const SUPABASE_KEY = "TU_PUBLISHABLE_KEY";
+
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
 const $=s=>document.querySelector(s),n=v=>parseFloat(v)||0;
 const money=v=>'$'+n(v).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pc=v=>Math.round(n(v)*100)+'%';
