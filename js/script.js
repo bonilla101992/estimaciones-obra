@@ -12,7 +12,7 @@ var S=blank(),tab='g';
    Mientras digan "TU_SUPABASE..." el sistema muestra una pantalla de aviso
    en vez de intentar conectarse.
    ================================================================== */
-const SUPABASE_URL = "TU_PROJECT_URL";
+const SUPABASE_URL = "https://nczsjqeooclqtvuegluu.supabase.co";
 const SUPABASE_KEY = "TU_PUBLISHABLE_KEY";
 const supa=(window.supabase&&!SUPA_URL.startsWith('TU_'))?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
 /* 'k' (borrador en edición) es solo tuyo, no se comparte: vive en localStorage de tu navegador.
