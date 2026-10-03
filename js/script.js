@@ -280,7 +280,7 @@ async function boot(){if(!supa){vista='noconfig';renderRoot();return}
 const{data:{session}}=await supa.auth.getSession();
 if(!session){vista='login';renderRoot();return}
 AUTH_UID=session.user.id;const prof=await claimIfMissing(session.user.email);
-if(!prof||!prof.activo){await supa.auth.signOut();vista='login';loginErr=prof?'Tu cuenta está inactiva. Contacta a un administrador.':'';renderRoot();return}
+if(!prof||!prof.activo){await supa.auth.signOut();vista='login';loginErr=prof?'Tu cuenta está inactiva. Contacta a un administrador.':'';renderRoot();return};
 AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()}
 async function doLogin(){const em=$('#lem').value.trim(),pw=$('#lpw').value;loginEmail=em;loginErr='';
 const{data,error}=await supa.auth.signInWithPassword({email:em,password:pw});
