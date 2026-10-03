@@ -270,17 +270,23 @@ prof={id:AUTH_UID,email:em,nombre:inv.nombre||nom,apellido:inv.apellido||ape,cel
 await supa.from('invites').delete().eq('email',em)}
 const{error}=await supa.from('profiles').upsert(prof);if(error)throw error;return prof}
 var AUTH_UID=null;
+/* Si ya existe sesión de Supabase (correo confirmado) pero todavía no hay fila en
+   'profiles' (porque la confirmación llegó después del signUp, por correo), la
+   creamos aquí mismo, al primer boot/login — así no se queda "huérfana". */
+async function claimIfMissing(em){let prof=await fetchProfile(AUTH_UID);
+if(!prof){try{prof=await afterAuthClaim(em,'','')}catch(e){}}
+return prof}
 async function boot(){if(!supa){vista='noconfig';renderRoot();return}
 const{data:{session}}=await supa.auth.getSession();
 if(!session){vista='login';renderRoot();return}
-AUTH_UID=session.user.id;const prof=await fetchProfile(AUTH_UID);
+AUTH_UID=session.user.id;const prof=await claimIfMissing(session.user.email);
 if(!prof||!prof.activo){await supa.auth.signOut();vista='login';loginErr=prof?'Tu cuenta está inactiva. Contacta a un administrador.':'';renderRoot();return}
 AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()}
 async function doLogin(){const em=$('#lem').value.trim(),pw=$('#lpw').value;loginEmail=em;loginErr='';
 const{data,error}=await supa.auth.signInWithPassword({email:em,password:pw});
 if(error){loginErr='Correo o contraseña incorrectos.';renderRoot();return}
-AUTH_UID=data.user.id;const prof=await fetchProfile(AUTH_UID);
-if(!prof||!prof.activo){await supa.auth.signOut();loginErr='Tu cuenta está inactiva, o aún no está registrada en este sistema.';renderRoot();return}
+AUTH_UID=data.user.id;const prof=await claimIfMissing(em);
+if(!prof||!prof.activo){await supa.auth.signOut();loginErr=prof?'Tu cuenta está inactiva. Contacta a un administrador.':'Tu correo no ha sido invitado por un administrador. Pídele que te invite desde "Usuarios".';renderRoot();return}
 AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()}
 async function doRegister(){const nom=$('#snom').value.trim(),ape=$('#sape').value.trim(),em=$('#sem').value.trim(),pw=$('#spw').value,cf=$('#scf').value;setupErr='';
 if(!nom||!em||!pw){setupErr='Completa nombre, correo y contraseña.';renderRoot();return}
