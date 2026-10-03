@@ -14,7 +14,6 @@ var S=blank(),tab='g';
    ================================================================== */
 const SUPA_URL = "https://nczsjqeooclqtvuegluu.supabase.co";
 const SUPA_KEY = "EWyCDuygP2u2TOmkyo_SQQ_GctSaWFK";
-
 const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 /* 'k' (borrador en edición) es solo tuyo, no se comparte: vive en localStorage de tu navegador.
    'estimaciones' SÍ es la biblioteca compartida (tabla en Supabase). */
