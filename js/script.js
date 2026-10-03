@@ -1,10 +1,3 @@
-const SUPABASE_URL = "TU_PROJECT_URL";
-const SUPABASE_KEY = "TU_PUBLISHABLE_KEY";
-
-const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
 const $=s=>document.querySelector(s),n=v=>parseFloat(v)||0;
 const money=v=>'$'+n(v).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pc=v=>Math.round(n(v)*100)+'%';
@@ -19,8 +12,8 @@ var S=blank(),tab='g';
    Mientras digan "TU_SUPABASE..." el sistema muestra una pantalla de aviso
    en vez de intentar conectarse.
    ================================================================== */
-const SUPA_URL='TU_SUPABASE_URL';
-const SUPA_KEY='TU_SUPABASE_ANON_KEY';
+const SUPA_URL='https://nczsjqeooclqtvuegluu.supabase.co';
+const SUPA_KEY='EWyCDuygP2u2TOmkyo_SQQ_GctSaWFK';
 const supa=(window.supabase&&!SUPA_URL.startsWith('TU_'))?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
 /* 'k' (borrador en edición) es solo tuyo, no se comparte: vive en localStorage de tu navegador.
    'estimaciones' SÍ es la biblioteca compartida (tabla en Supabase). */
