@@ -12,9 +12,26 @@ var S=blank(),tab='g';
    Mientras digan "TU_SUPABASE..." el sistema muestra una pantalla de aviso
    en vez de intentar conectarse.
    ================================================================== */
-const SUPA_URL='https://nczsjqeooclqtvuegluu.supabase.co';
-const SUPA_KEY='sb_publishable_sQdvI4-8WuJWvAFxJSGMFw_RRwZppIv';
+const SUPA_URL='https://nczsjqeooclqtvuegluu.supabase.co';bl
+const SUPA_KEY='sb_puishable_sQdvI4-8WuJWvAFxJSGMFw_RRwZppIv';
 const supa=(window.supabase&&!SUPA_URL.startsWith('TU_'))?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
+/* Cuando alguien entra desde el enlace de "Olvidé mi contraseña", Supabase arma
+   una sesión temporal y avisa con el evento PASSWORD_RECOVERY: ahí le pedimos
+   la contraseña nueva antes de dejarlo seguir. */
+if(supa)supa.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){vista='resetpw';setupErr='';renderRoot()}});
+async function doForgot(){const em=($('#lem')&&$('#lem').value.trim())||'';
+if(!em){loginErr='Escribe tu correo arriba y luego da clic en "¿Olvidaste tu contraseña?".';renderRoot();return}
+loginEmail=em;loginErr='Enviando...';renderRoot();
+try{const{error}=await supa.auth.resetPasswordForEmail(em,{redirectTo:location.href.split('#')[0]});
+loginErr=error?('No se pudo enviar el correo: '+error.message):'Si ese correo tiene una cuenta, te mandamos un enlace para crear una contraseña nueva. Revisa tu bandeja (y spam).';
+renderRoot()}catch(e){loginErr='Error: '+e.message;renderRoot()}}
+async function doResetPw(){const nw=$('#rpw').value,cf=$('#rcf').value;setupErr='';
+if(!nw||nw.length<6){setupErr='La contraseña debe tener al menos 6 caracteres.';renderRoot();return}
+if(nw!==cf){setupErr='Las contraseñas no coinciden.';renderRoot();return}
+try{const{error}=await supa.auth.updateUser({password:nw});
+if(error){setupErr=error.message;renderRoot();return}
+await supa.auth.signOut();vista='login';loginEmail='';loginErr='Contraseña actualizada. Inicia sesión con tu nueva contraseña.';renderRoot()
+}catch(e){setupErr='Error: '+e.message;renderRoot()}}
 /* 'k' (borrador en edición) es solo tuyo, no se comparte: vive en localStorage de tu navegador.
    'estimaciones' SÍ es la biblioteca compartida (tabla en Supabase). */
 var idbPut=(store,val,key)=>{
@@ -287,7 +304,7 @@ AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()
 async function doLogin(){const em=$('#lem').value.trim(),pw=$('#lpw').value;loginEmail=em;loginErr='';
 try{
 const{data,error}=await supa.auth.signInWithPassword({email:em,password:pw});
-if(error){loginErr='Correo o contraseña incorrectos.';renderRoot();return}
+if(error){loginErr=/confirm/i.test(error.message)?'Tu correo aún no está confirmado. Revisa tu bandeja (y spam), o usa "¿Olvidaste tu contraseña?" para recibir un enlace nuevo.':'Correo o contraseña incorrectos. Si no estás seguro de cuál pusiste, usa "¿Olvidaste tu contraseña?".';renderRoot();return}
 AUTH_UID=data.user.id;const prof=await claimIfMissing(em);
 if(!prof||!prof.activo){await supa.auth.signOut();loginErr=prof?'Tu cuenta está inactiva. Contacta a un administrador.':'Tu correo no ha sido invitado por un administrador. Pídele que te invite desde "Usuarios".';renderRoot();return}
 AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()
@@ -361,7 +378,15 @@ function loginHTML(){return`<div class="authwrap"><div class="authcard">
 <label>Contraseña<input id="lpw" type="password" onkeydown="if(event.key=='Enter')doLogin()"></label>
 ${loginErr?`<div class="err">${esc(loginErr)}</div>`:''}
 <button class="p" onclick="doLogin()">Iniciar sesión</button>
-<p class="mut" style="margin-top:14px">¿No tienes cuenta? <a onclick="vista='register';setupErr='';renderRoot()" style="cursor:pointer;color:var(--blue)">Regístrate aquí</a> — funciona si eres la primera persona en usar el sistema, o si un administrador ya te invitó con este correo.</p>
+<p class="mut" style="margin-top:10px"><a onclick="doForgot()" style="cursor:pointer;color:var(--blue)">¿Olvidaste tu contraseña?</a></p>
+<p class="mut" style="margin-top:6px">¿No tienes cuenta? <a onclick="vista='register';setupErr='';renderRoot()" style="cursor:pointer;color:var(--blue)">Regístrate aquí</a> — funciona si eres la primera persona en usar el sistema, o si un administrador ya te invitó con este correo.</p>
+</div></div>`}
+function resetpwHTML(){return`<div class="authwrap"><div class="authcard" style="max-width:400px">
+<h2>Crea una nueva contraseña</h2><p class="mut">Escribe la nueva contraseña para tu cuenta.</p>
+<label>Nueva contraseña<input id="rpw" type="password"></label>
+<label>Confirmar contraseña<input id="rcf" type="password"></label>
+${setupErr?`<div class="err">${esc(setupErr)}</div>`:''}
+<button class="p" onclick="doResetPw()">Guardar nueva contraseña</button>
 </div></div>`}
 function registerHTML(){return`<div class="authwrap"><div class="authcard" style="max-width:400px">
 <h2>Crear cuenta</h2><p class="mut">Si eres la primera persona en usar este sistema, tu cuenta será de administrador. Si no, usa el mismo correo con el que un administrador ya te invitó desde "Usuarios".</p>
@@ -433,6 +458,7 @@ function pageHTML(){if(page=='home')return homeHTML();if(page=='library')return 
 function renderRoot(){const root=$('#root');
 if(vista=='noconfig'){root.innerHTML=noConfigHTML();return}
 if(vista=='register'){root.innerHTML=registerHTML();return}
+if(vista=='resetpw'){root.innerHTML=resetpwHTML();return}
 if(vista=='login'){root.innerHTML=loginHTML();const e=$('#lem');if(e&&loginEmail)e.focus();return}
 root.innerHTML=`<div class="shell">${sidebarHTML()}<div class="main">${topbarHTML()}<div class="content">${page=='editor'?'<nav id="nav"></nav><main id="m"></main>':pageHTML()}</div></div></div>`;
 if(page=='editor'){nav();draw()}}
