@@ -12,8 +12,8 @@ var S=blank(),tab='g';
    Mientras digan "TU_SUPABASE..." el sistema muestra una pantalla de aviso
    en vez de intentar conectarse.
    ================================================================== */
-const SUPA_URL='https://nczsjqeooclqtvuegluu.supabase.co';
-const SUPA_KEY='sb_publishable_sQdvI4-8WuJWvAFxJSGMFw_RRwZppIv';
+const SUPA_URL='TU_SUPABASE_URL';
+const SUPA_KEY='TU_SUPABASE_ANON_KEY';
 const supa=(window.supabase&&!SUPA_URL.startsWith('TU_'))?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
 /* 'k' (borrador en edición) es solo tuyo, no se comparte: vive en localStorage de tu navegador.
    'estimaciones' SÍ es la biblioteca compartida (tabla en Supabase). */
@@ -274,25 +274,30 @@ var AUTH_UID=null;
    'profiles' (porque la confirmación llegó después del signUp, por correo), la
    creamos aquí mismo, al primer boot/login — así no se queda "huérfana". */
 async function claimIfMissing(em){let prof=await fetchProfile(AUTH_UID);
-if(!prof){try{prof=await afterAuthClaim(em,'','')}catch(e){}}
+if(!prof)prof=await afterAuthClaim(em,'','');
 return prof}
 async function boot(){if(!supa){vista='noconfig';renderRoot();return}
+try{
 const{data:{session}}=await supa.auth.getSession();
 if(!session){vista='login';renderRoot();return}
 AUTH_UID=session.user.id;const prof=await claimIfMissing(session.user.email);
 if(!prof||!prof.activo){await supa.auth.signOut();vista='login';loginErr=prof?'Tu cuenta está inactiva. Contacta a un administrador.':'';renderRoot();return}
-AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()}
+AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()
+}catch(e){console.error(e);vista='login';loginErr='No se pudo conectar con la base de datos: '+e.message;renderRoot()}}
 async function doLogin(){const em=$('#lem').value.trim(),pw=$('#lpw').value;loginEmail=em;loginErr='';
+try{
 const{data,error}=await supa.auth.signInWithPassword({email:em,password:pw});
 if(error){loginErr='Correo o contraseña incorrectos.';renderRoot();return}
 AUTH_UID=data.user.id;const prof=await claimIfMissing(em);
 if(!prof||!prof.activo){await supa.auth.signOut();loginErr=prof?'Tu cuenta está inactiva. Contacta a un administrador.':'Tu correo no ha sido invitado por un administrador. Pídele que te invite desde "Usuarios".';renderRoot();return}
-AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()}
+AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()
+}catch(e){console.error(e);loginErr='Ocurrió un error al conectar con la base de datos: '+e.message;renderRoot()}}
 async function doRegister(){const nom=$('#snom').value.trim(),ape=$('#sape').value.trim(),em=$('#sem').value.trim(),pw=$('#spw').value,cf=$('#scf').value;setupErr='';
 if(!nom||!em||!pw){setupErr='Completa nombre, correo y contraseña.';renderRoot();return}
 if(!/^\S+@\S+\.\S+$/.test(em)){setupErr='Escribe un correo electrónico válido.';renderRoot();return}
 if(pw!==cf){setupErr='Las contraseñas no coinciden.';renderRoot();return}
 if(pw.length<6){setupErr='La contraseña debe tener al menos 6 caracteres.';renderRoot();return}
+try{
 const{data,error}=await supa.auth.signUp({email:em,password:pw});
 if(error){setupErr=error.message;renderRoot();return}
 /* Por seguridad, Supabase no marca error si el correo ya tiene cuenta: en ese caso
@@ -302,7 +307,8 @@ setupErr='';loginErr='Este correo ya tiene una cuenta creada. Si ya la confirmas
 if(!data.session){setupErr='';loginErr='Cuenta creada. Revisa tu correo para confirmarla y después inicia sesión aquí.';vista='login';loginEmail=em;renderRoot();return}
 AUTH_UID=data.user.id;const prof=await afterAuthClaim(em,nom,ape);
 if(!prof){setupErr='Tu correo no ha sido invitado por un administrador. Pídele que te invite desde "Usuarios".';await supa.auth.signOut();renderRoot();return}
-AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()}
+AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()
+}catch(e){console.error(e);setupErr='Ocurrió un error al conectar con la base de datos: '+e.message;renderRoot()}}
 async function logout(){await supa.auth.signOut();AUTH=null;AUTH_UID=null;S=blank();vista='login';loginEmail='';loginErr='';renderRoot()}
 async function goPage(p){
 if(p=='library'&&AUTH.rol!='admin'&&AUTH.perm&&AUTH.perm.mis===false)return;
@@ -370,8 +376,8 @@ ${setupErr?`<div class="err">${esc(setupErr)}</div>`:''}
 function noConfigHTML(){return`<div class="authwrap"><div class="authcard" style="max-width:460px">
 <h2>Falta configurar la base de datos</h2>
 <p class="mut">Este sistema usa una base de datos compartida (Supabase) para que varias personas vean la misma información. Abre este archivo HTML con un editor de texto, busca cerca del inicio de la etiqueta &lt;script&gt; estas dos líneas:</p>
-<pre style="background:#f4f6f9;padding:10px;border-radius:6px;font-size:12px;overflow:auto">const SUPA_URL='https://nczsjqeooclqtvuegluu.supabase.co';
-const SUPA_KEY='sb_publishable_sQdvI4-8WuJWvAFxJSGMFw_RRwZppIv';</pre>
+<pre style="background:#f4f6f9;padding:10px;border-radius:6px;font-size:12px;overflow:auto">const SUPA_URL='TU_SUPABASE_URL';
+const SUPA_KEY='TU_SUPABASE_ANON_KEY';</pre>
 <p class="mut">y sustitúyelas por la URL y la "anon key" de tu proyecto de Supabase (Project Settings → API). Guarda el archivo y vuelve a abrirlo.</p>
 </div></div>`}
 function sidebarHTML(){const u=AUTH,item=(p,label,show)=>show===false?'':`<button class="${page==p?'on':''}" onclick="goPage('${p}')">${label}</button>`;
