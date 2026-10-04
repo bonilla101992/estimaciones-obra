@@ -12,7 +12,7 @@ var S=blank(),tab='g';
    Mientras digan "TU_SUPABASE..." el sistema muestra una pantalla de aviso
    en vez de intentar conectarse.
    ================================================================== */
-const SUPA_URL='https://nczsjqeooclqtvuegluu.supabase.co';bl
+const SUPA_URL='https://nczsjqeooclqtvuegluu.supabase.co';
 const SUPA_KEY='sb_puishable_sQdvI4-8WuJWvAFxJSGMFw_RRwZppIv';
 const supa=(window.supabase&&!SUPA_URL.startsWith('TU_'))?window.supabase.createClient(SUPA_URL,SUPA_KEY):null;
 /* Cuando alguien entra desde el enlace de "Olvidé mi contraseña", Supabase arma
