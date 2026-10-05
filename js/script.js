@@ -19,6 +19,10 @@ const supa=(window.supabase&&!SUPA_URL.startsWith('TU_'))?window.supabase.create
    una sesión temporal y avisa con el evento PASSWORD_RECOVERY: ahí le pedimos
    la contraseña nueva antes de dejarlo seguir. */
 if(supa)supa.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){vista='resetpw';setupErr='';renderRoot()}});
+/* El enlace de recuperación trae "type=recovery" en la URL. Lo revisamos de una vez,
+   ANTES de boot(), para no dejar pasar un inicio de sesión automático sin pedir la
+   contraseña nueva (el aviso de arriba a veces llega después de que boot() ya entró). */
+const IS_RECOVERY_LINK=/type=recovery/.test(location.hash);
 async function doForgot(){const em=($('#lem')&&$('#lem').value.trim())||'';
 if(!em){loginErr='Escribe tu correo arriba y luego da clic en "¿Olvidaste tu contraseña?".';renderRoot();return}
 loginEmail=em;loginErr='Enviando...';renderRoot();
@@ -304,7 +308,7 @@ AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()
 async function doLogin(){const em=$('#lem').value.trim(),pw=$('#lpw').value;loginEmail=em;loginErr='';
 try{
 const{data,error}=await supa.auth.signInWithPassword({email:em,password:pw});
-if(error){loginErr=/confirm/i.test(error.message)?'Tu correo aún no está confirmado. Revisa tu bandeja (y spam), o usa "¿Olvidaste tu contraseña?" para recibir un enlace nuevo.':'Correo o contraseña incorrectos. Si no estás seguro de cuál pusiste, usa "¿Olvidaste tu contraseña?".';renderRoot();return}
+if(error){loginErr=/confirm/i.test(error.message)?'Tu correo aún no está confirmado. Revisa tu bandeja (y spam), o usa "¿Olvidaste tu contraseña?" para recibir un enlace nuevo.':`Correo o contraseña incorrectos. Si no estás seguro de cuál pusiste, usa "¿Olvidaste tu contraseña?". (Detalle técnico: ${error.message})`;renderRoot();return}
 AUTH_UID=data.user.id;const prof=await claimIfMissing(em);
 if(!prof||!prof.activo){await supa.auth.signOut();loginErr=prof?'Tu cuenta está inactiva. Contacta a un administrador.':'Tu correo no ha sido invitado por un administrador. Pídele que te invite desde "Usuarios".';renderRoot();return}
 AUTH=prof;await afterLoginLoad();vista='app';page=landingPage(AUTH);renderRoot()
@@ -401,8 +405,8 @@ ${setupErr?`<div class="err">${esc(setupErr)}</div>`:''}
 function noConfigHTML(){return`<div class="authwrap"><div class="authcard" style="max-width:460px">
 <h2>Falta configurar la base de datos</h2>
 <p class="mut">Este sistema usa una base de datos compartida (Supabase) para que varias personas vean la misma información. Abre este archivo HTML con un editor de texto, busca cerca del inicio de la etiqueta &lt;script&gt; estas dos líneas:</p>
-<pre style="background:#f4f6f9;padding:10px;border-radius:6px;font-size:12px;overflow:auto">const SUPA_URL='https://nczsjqeooclqtvuegluu.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jenNqcWVvb2NscXR2dWVnbHV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NjEwMzMsImV4cCI6MjEwNjUzNzAzM30.KAYRgnqgKMKNNkqNwG9tyKB7Ny4owQ4gbrBIY6Z7_Hg';</pre>
+<pre style="background:#f4f6f9;padding:10px;border-radius:6px;font-size:12px;overflow:auto">const SUPA_URL='TU_SUPABASE_URL';
+const SUPA_KEY='TU_SUPABASE_ANON_KEY';</pre>
 <p class="mut">y sustitúyelas por la URL y la "anon key" de tu proyecto de Supabase (Project Settings → API). Guarda el archivo y vuelve a abrirlo.</p>
 </div></div>`}
 function sidebarHTML(){const u=AUTH,item=(p,label,show)=>show===false?'':`<button class="${page==p?'on':''}" onclick="goPage('${p}')">${label}</button>`;
@@ -462,4 +466,5 @@ if(vista=='resetpw'){root.innerHTML=resetpwHTML();return}
 if(vista=='login'){root.innerHTML=loginHTML();const e=$('#lem');if(e&&loginEmail)e.focus();return}
 root.innerHTML=`<div class="shell">${sidebarHTML()}<div class="main">${topbarHTML()}<div class="content">${page=='editor'?'<nav id="nav"></nav><main id="m"></main>':pageHTML()}</div></div></div>`;
 if(page=='editor'){nav();draw()}}
-boot();
+if(supa&&IS_RECOVERY_LINK){vista='resetpw';setupErr='';renderRoot();history.replaceState(null,'',location.pathname+location.search)}
+else{boot()}
