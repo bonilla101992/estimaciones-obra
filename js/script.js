@@ -405,8 +405,8 @@ ${setupErr?`<div class="err">${esc(setupErr)}</div>`:''}
 function noConfigHTML(){return`<div class="authwrap"><div class="authcard" style="max-width:460px">
 <h2>Falta configurar la base de datos</h2>
 <p class="mut">Este sistema usa una base de datos compartida (Supabase) para que varias personas vean la misma información. Abre este archivo HTML con un editor de texto, busca cerca del inicio de la etiqueta &lt;script&gt; estas dos líneas:</p>
-<pre style="background:#f4f6f9;padding:10px;border-radius:6px;font-size:12px;overflow:auto">const SUPA_URL='TU_SUPABASE_URL';
-const SUPA_KEY='TU_SUPABASE_ANON_KEY';</pre>
+<pre style="background:#f4f6f9;padding:10px;border-radius:6px;font-size:12px;overflow:auto">const SUPA_URL='https://nczsjqeooclqtvuegluu.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jenNqcWVvb2NscXR2dWVnbHV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NjEwMzMsImV4cCI6MjEwNjUzNzAzM30.KAYRgnqgKMKNNkqNwG9tyKB7Ny4owQ4gbrBIY6Z7_Hg';</pre>
 <p class="mut">y sustitúyelas por la URL y la "anon key" de tu proyecto de Supabase (Project Settings → API). Guarda el archivo y vuelve a abrirlo.</p>
 </div></div>`}
 function sidebarHTML(){const u=AUTH,item=(p,label,show)=>show===false?'':`<button class="${page==p?'on':''}" onclick="goPage('${p}')">${label}</button>`;
