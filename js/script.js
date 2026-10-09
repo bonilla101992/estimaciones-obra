@@ -214,8 +214,14 @@ TH(17,'E','F','IMPORTES CON IVA');TR(18,'E','F','IMPORTE DE ESTA ESTIMACION',{fo
 cu.mergeCells('A27:D27');cu.mergeCells('A28:F28');cu.getCell('A27').value='IMPORTE LIQUIDO TOTAL';cu.getCell('E27').value='$';cu.getCell('F27').value={formula:'F20'};cu.getCell('F27').numFmt='#,##0.00';cu.getCell('A28').value='CON LETRA: '+letras(t.liq);[27,28].forEach(r=>{for(let c=1;c<=6;c++)st(cu.getCell(r,c),1,'FFBDD7EE')});cu.getCell('F27').alignment={horizontal:'right'};FIR(cu,30,[['A','B'],['C','D'],['E','F']]);
 /* GENERADOR */
 const RG=[['A','B'],['C','E'],['F','I']];ge.columns=[9,50,14,12,9,9,9,9,11].map(w=>({width:w}));ge.addRow([]);HD(ge,RG,1);LG(ge,9,1);H(ge.addRow(['Clave','Concepto','Elemento','Eje','Piezas','Largo','Alto','Ancho','Cantidad']));
+const T2={style:'medium'};
 S.items.forEach(i=>{const rs=S.gen[i.id]||[];if(!rs.length)return;const a=ge.rowCount+1;rs.forEach((r,x)=>{const q=ge.rowCount+1,w=ge.addRow([x?'':i.clave,x?'':i.desc,r.elem,r.eje,n(r.pzas)||null,n(r.largo)||null,n(r.alto)||null,n(r.ancho)||null,{formula:`IF(COUNT(E${q}:H${q})=0,0,IF(E${q}="",1,E${q})*IF(F${q}="",1,F${q})*IF(G${q}="",1,G${q})*IF(H${q}="",1,H${q}))`}]);w.eachCell(c=>{c.border=B;c.font={name:'Arial',size:9};c.alignment={wrapText:true,vertical:'top'}})});
-const w=ge.addRow(['','TOTAL '+i.unidad,'','','','','','',{formula:`SUM(I${a}:I${ge.rowCount})`}]);w.eachCell(c=>{c.font={bold:true};c.fill=fl('FFFFF2A8')})});FIR(ge,ge.rowCount+3,RG);
+const w=ge.addRow(['','TOTAL '+i.unidad,'','','','','','',{formula:`SUM(I${a}:I${ge.rowCount})`}]);w.eachCell(c=>{c.font={bold:true};c.fill=fl('FFFFF2A8');c.border=B});
+/* marco grueso alrededor de todo el bloque de esta clave, como "tabla dentro de la tabla" */
+const top=a,bot=ge.rowCount;
+for(let r=top;r<=bot;r++)for(let c=1;c<=9;c++){const cell=ge.getCell(r,c),cur=cell.border||{};
+cell.border={top:r==top?T2:cur.top,left:c==1?T2:cur.left,right:c==9?T2:cur.right,bottom:r==bot?T2:cur.bottom}}
+ge.addRow([])});FIR(ge,ge.rowCount+3,RG);
 /* CROQUIS Y FOTOS */
 ev.columns=[45,45,45,14].map(w=>({width:w}));ev.addRow([]);HD(ev,[['A','A'],['B','B'],['C','C']],1);LG(ev,4,1);let y=3;
 for(const i of S.items){for(const s of S.ev[i.id]||[]){ev.getCell(y,1).value=`${i.clave}  ${i.desc}`;ev.getCell(y,1).font={bold:true};const im=await new Promise(r=>{const o=new Image;o.onload=()=>r(o);o.src=s}),w=620,h=Math.round(w*im.height/im.width);
@@ -262,8 +268,19 @@ const detFoot=fLbl.map((lb,r)=>{const row=['',lb,'','','',fTot[r](t.contrato),''
 if(r==2){row[5]=mkY(row[5]);row[11]=mkY(row[11])}return row});
 d.addPage();tb('DETALLE POR CONCEPTO',{theme:'grid',head:[[{content:'Clave',rowSpan:2},{content:'Descripción',rowSpan:2},{content:'Uni.',rowSpan:2},{content:'Cant.',rowSpan:2},{content:'P.U.',rowSpan:2},{content:'Importe total',rowSpan:2},{content:'VOLÚMENES',colSpan:4,styles:{halign:'center'}},{content:'IMPORTES',colSpan:3,styles:{halign:'center'}},{content:'Avance',rowSpan:2}],['Acum. anterior',{content:'Esta estimación',styles:{textColor:[220,0,0]}},'Acumulado','Diferencia','Importe anterior',{content:'Imp. esta est.',styles:{textColor:[220,0,0]}},'Importe acumulado']],body:detBody,foot:detFoot,footStyles:{fillColor:255,textColor:20,fontStyle:'bold'},columnStyles:{1:{cellWidth:160}},styles:{...st.styles,fontSize:6.8}});
 firmasBox(d.lastAutoTable.finalY+10);
-const vr=[];S.items.forEach(i=>(S.gen[i.id]||[]).forEach((r,x)=>vr.push([x?'':i.clave,x?'':i.desc,r.elem,r.eje,r.pzas,r.largo,r.alto,r.ancho,n(r.cant).toFixed(2)])));
-if(vr.length){d.addPage();tb('GENERADOR DE VOLUMEN',{theme:'grid',head:[['Clave','Concepto','Elemento','Eje','Piezas','Largo','Alto','Ancho','Cantidad']],body:vr,columnStyles:{1:{cellWidth:260}}});firmasBox(d.lastAutoTable.finalY+10)}
+/* GENERADOR DE VOLUMEN: una "tabla dentro de la tabla" por clave — recuadro propio,
+   separada de las demás, con su renglón TOTAL en amarillo al pie, igual que el original. */
+const genItems=S.items.filter(i=>!i.isHead&&(S.gen[i.id]||[]).length);
+if(genItems.length){d.addPage();let gy=92;const bw3=260,estRowH=tx=>Math.max(14,d.splitTextToSize(String(tx||''),bw3-8).length*9+8);
+genItems.forEach((i,idx)=>{const rows=S.gen[i.id],total=rows.reduce((s,r)=>s+n(r.cant),0),
+body=rows.map((r,x)=>[x?'':i.clave,x?'':i.desc,r.elem,r.eje,r.pzas,r.largo,r.alto,r.ancho,n(r.cant).toFixed(2)]);
+const boxH=(idx==0?26:0)+rows.reduce((s,r,x)=>s+estRowH(x?i.desc:''),0)+16;
+if(gy+boxH>Hh-120){d.addPage();pg('GENERADOR DE VOLUMEN',undefined,true);gy=92}
+d.autoTable({...st,startY:gy,theme:'grid',head:gy==92?[['Clave','Concepto','Elemento','Eje','Piezas','Largo','Alto','Ancho','Cantidad']]:[],
+body,foot:[['','TOTAL '+i.unidad,'','','','','','',total.toFixed(2)]],footStyles:{fillColor:[255,242,168],textColor:20,fontStyle:'bold'},
+columnStyles:{1:{cellWidth:260}},didDrawPage:()=>pg('GENERADOR DE VOLUMEN',undefined,true)});
+gy=d.lastAutoTable.finalY+14});
+firmasBox(d.lastAutoTable.finalY+10)}
 for(const i of S.items){if(i.isHead)continue;const im=S.ev[i.id]||[];for(let k=0;k<im.length;k+=2){d.addPage();pg('CROQUIS Y FOTOS');d.setFontSize(8).setFont('helvetica','normal').text(`${i.clave}  ${(i.desc||'').slice(0,190)}`,30,92,{maxWidth:W-60});
 im.slice(k,k+2).forEach((s,j)=>{const p=d.getImageProperties(s),bw2=(W-80)/2,bh=Hh-118-108,r=Math.min(bw2/p.width,bh/p.height);d.addImage(s,'JPEG',30+j*(bw2+20),108,p.width*r,p.height*r)})}}
 for(const i of S.items){if(i.isHead)continue;const im=(S.rf[i.id]||[]).slice(0,2);if(!im.length)continue;
