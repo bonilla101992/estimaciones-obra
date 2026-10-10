@@ -215,7 +215,14 @@ cu.mergeCells('A27:D27');cu.mergeCells('A28:F28');cu.getCell('A27').value='IMPOR
 /* GENERADOR */
 const RG=[['A','B'],['C','E'],['F','I']];ge.columns=[9,50,14,12,9,9,9,9,11].map(w=>({width:w}));ge.addRow([]);HD(ge,RG,1);LG(ge,9,1);H(ge.addRow(['Clave','Concepto','Elemento','Eje','Piezas','Largo','Alto','Ancho','Cantidad']));
 const T2={style:'medium'};
-S.items.forEach(i=>{const rs=S.gen[i.id]||[];if(!rs.length)return;const a=ge.rowCount+1;rs.forEach((r,x)=>{const q=ge.rowCount+1,w=ge.addRow([x?'':i.clave,x?'':i.desc,r.elem,r.eje,n(r.pzas)||null,n(r.largo)||null,n(r.alto)||null,n(r.ancho)||null,{formula:`IF(COUNT(E${q}:H${q})=0,0,IF(E${q}="",1,E${q})*IF(F${q}="",1,F${q})*IF(G${q}="",1,G${q})*IF(H${q}="",1,H${q}))`}]);w.eachCell(c=>{c.border=B;c.font={name:'Arial',size:9};c.alignment={wrapText:true,vertical:'top'}})});
+S.items.forEach(i=>{const rs=S.gen[i.id]||[];if(!rs.length)return;const a=ge.rowCount+1;rs.forEach((r,x)=>{const q=ge.rowCount+1,w=ge.addRow([x?'':i.clave,x?'':i.desc,x?'':rs[0].elem,r.eje,n(r.pzas)||null,n(r.largo)||null,n(r.alto)||null,n(r.ancho)||null,{formula:`IF(COUNT(E${q}:H${q})=0,0,IF(E${q}="",1,E${q})*IF(F${q}="",1,F${q})*IF(G${q}="",1,G${q})*IF(H${q}="",1,H${q}))`}]);w.eachCell(c=>{c.border=B;c.font={name:'Arial',size:9};c.alignment={wrapText:true,vertical:'top'}})});
+/* Clave, Concepto y Elemento: una sola celda combinada y centrada en altura,
+   cubriendo todos los renglones de esta clave (igual que en el Excel original). */
+const dataEnd=ge.rowCount;
+ge.mergeCells(a,1,dataEnd,1);ge.mergeCells(a,2,dataEnd,2);ge.mergeCells(a,3,dataEnd,3);
+ge.getCell(a,1).alignment={vertical:'middle',horizontal:'center',wrapText:true};
+ge.getCell(a,2).alignment={vertical:'middle',horizontal:'left',wrapText:true};
+ge.getCell(a,3).alignment={vertical:'middle',horizontal:'center',wrapText:true};
 const w=ge.addRow(['','TOTAL '+i.unidad,'','','','','','',{formula:`SUM(I${a}:I${ge.rowCount})`}]);w.eachCell(c=>{c.font={bold:true};c.fill=fl('FFFFF2A8');c.border=B});
 /* marco grueso alrededor de todo el bloque de esta clave, como "tabla dentro de la tabla" */
 const top=a,bot=ge.rowCount;
@@ -271,14 +278,21 @@ firmasBox(d.lastAutoTable.finalY+10);
 /* GENERADOR DE VOLUMEN: una "tabla dentro de la tabla" por clave — recuadro propio,
    separada de las demás, con su renglón TOTAL en amarillo al pie, igual que el original. */
 const genItems=S.items.filter(i=>!i.isHead&&(S.gen[i.id]||[]).length);
-if(genItems.length){d.addPage();let gy=92;const bw3=260,estRowH=tx=>Math.max(14,d.splitTextToSize(String(tx||''),bw3-8).length*9+8);
-genItems.forEach((i,idx)=>{const rows=S.gen[i.id],total=rows.reduce((s,r)=>s+n(r.cant),0),
-body=rows.map((r,x)=>[x?'':i.clave,x?'':i.desc,r.elem,r.eje,r.pzas,r.largo,r.alto,r.ancho,n(r.cant).toFixed(2)]);
-const boxH=(idx==0?26:0)+rows.reduce((s,r,x)=>s+estRowH(x?i.desc:''),0)+16;
+/* Anchos fijos e iguales para TODAS las cajas, para que las columnas queden
+   alineadas de una clave a otra (si se dejan calcular solas, cada caja sale
+   con anchos distintos y las columnas se ven "descuadradas"). */
+const genCols={0:{cellWidth:44},1:{cellWidth:205},2:{cellWidth:78},3:{cellWidth:85},4:{cellWidth:48},5:{cellWidth:52},6:{cellWidth:48},7:{cellWidth:52},8:{cellWidth:62,halign:'right'}};
+if(genItems.length){d.addPage();let gy=92;const bw3=205,estRowH=tx=>Math.max(14,d.splitTextToSize(String(tx||''),bw3-8).length*9+8);
+genItems.forEach((i,idx)=>{const rows=S.gen[i.id],total=rows.reduce((s,r)=>s+n(r.cant),0),vmid={valign:'middle'};
+/* Clave, Concepto y Elemento van como una sola celda combinada y centrada en
+   altura, cubriendo todos los renglones de esta clave — el resto (Eje, Piezas,
+   Largo, Alto, Ancho, Cantidad) sí va renglón por renglón. */
+body=rows.map((r,x)=>x==0?[{content:i.clave,rowSpan:rows.length,styles:vmid},{content:i.desc,rowSpan:rows.length,styles:vmid},{content:rows[0].elem,rowSpan:rows.length,styles:{...vmid,halign:'center'}},r.eje,r.pzas,r.largo,r.alto,r.ancho,n(r.cant).toFixed(2)]:[r.eje,r.pzas,r.largo,r.alto,r.ancho,n(r.cant).toFixed(2)]);
+const boxH=(idx==0?26:0)+estRowH(i.desc)+rows.length*12+16;
 if(gy+boxH>Hh-120){d.addPage();pg('GENERADOR DE VOLUMEN',undefined,true);gy=92}
 d.autoTable({...st,startY:gy,theme:'grid',head:gy==92?[['Clave','Concepto','Elemento','Eje','Piezas','Largo','Alto','Ancho','Cantidad']]:[],
 body,foot:[['','TOTAL '+i.unidad,'','','','','','',total.toFixed(2)]],footStyles:{fillColor:[255,242,168],textColor:20,fontStyle:'bold'},
-columnStyles:{1:{cellWidth:260}},didDrawPage:()=>pg('GENERADOR DE VOLUMEN',undefined,true)});
+columnStyles:genCols,didDrawPage:()=>pg('GENERADOR DE VOLUMEN',undefined,true)});
 gy=d.lastAutoTable.finalY+14});
 firmasBox(d.lastAutoTable.finalY+10)}
 for(const i of S.items){if(i.isHead)continue;const im=S.ev[i.id]||[];for(let k=0;k<im.length;k+=2){d.addPage();pg('CROQUIS Y FOTOS');d.setFontSize(8).setFont('helvetica','normal').text(`${i.clave}  ${(i.desc||'').slice(0,190)}`,30,92,{maxWidth:W-60});
